@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0a0a1a] text-white font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.37)];
+  }
+  
+  .shadow-glow-purple {
+    @apply shadow-[0_0_20px_rgba(139,92,246,0.3)];
+  }
+  
+  .shadow-glow-blue {
+    @apply shadow-[0_0_20px_rgba(59,130,246,0.3)];
+  }
+
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-primary/50 focus:bg-white/10 transition-all;
+  }
+}
+
+.bg-dark { background-color: #0a0a1a; }
+.bg-dark-card { background-color: #111122; }
+.text-primary { color: #8b5cf6; }
+.bg-primary { background-color: #8b5cf6; }
+.border-primary { border-color: #8b5cf6; }
+.text-secondary { color: #3b82f6; }
+.bg-secondary { background-color: #3b82f6; }
+.border-secondary { border-color: #3b82f6; }
