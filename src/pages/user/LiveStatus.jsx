@@ -83,6 +83,22 @@ const LiveStatus = () => {
     setActingOnId(null);
   };
 
+  const handleReject = async (id) => {
+    if (!window.confirm('Are you sure you want to abort this mission? This cannot be undone.')) return;
+    
+    setActingOnId(id);
+    const { data: { session } } = await supabase.auth.getSession();
+    try {
+      await axios.post(`/api/user/bookings/${id}/action`, { action: 'reject' }, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      toast.success('Mission Aborted');
+      setPaymentModal(null);
+      fetchMissions();
+    } catch (e) { toast.error('Abort failed'); }
+    setActingOnId(null);
+  };
+
   const getStatusConfig = (status) => {
     const configs = {
       pending: { color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Signal Pending', icon: Clock },
@@ -125,9 +141,18 @@ const LiveStatus = () => {
                   </div>
                   
                   {job.status === 'cost_sent' && (
-                    <button onClick={() => setPaymentModal(job)} className="w-full py-4 bg-secondary text-dark rounded-xl font-bold uppercase text-[10px] shadow-glow-blue flex items-center justify-center gap-2">
-                      <CreditCard size={16} /> Pay ₹{(job.final_cost || 0).toLocaleString()}
-                    </button>
+                    <div className="flex flex-col gap-3">
+                      <button onClick={() => setPaymentModal(job)} className="w-full py-4 bg-secondary text-dark rounded-xl font-bold uppercase text-[10px] shadow-glow-blue flex items-center justify-center gap-2">
+                        <CreditCard size={16} /> Pay ₹{(job.final_cost || 0).toLocaleString()}
+                      </button>
+                      <button 
+                        onClick={() => handleReject(job.id)} 
+                        disabled={actingOnId === job.id}
+                        className="w-full py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-bold uppercase text-[8px] tracking-widest hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
+                      >
+                        {actingOnId === job.id ? <Loader2 className="animate-spin" size={12} /> : <XCircle size={12} />} Abort Mission
+                      </button>
+                    </div>
                   )}
 
                   {operative && (
@@ -201,9 +226,18 @@ const LiveStatus = () => {
                   <span className="text-4xl font-bold text-white">{(paymentModal.final_cost || 0).toLocaleString()}</span>
                 </div>
               </div>
-              <button onClick={handlePayment} disabled={actingOnId} className="w-full py-5 bg-secondary text-dark rounded-2xl font-bold uppercase text-xs shadow-glow-blue flex items-center justify-center gap-3 active:scale-95 transition-all">
-                {actingOnId ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Pay & Authorize</>}
-              </button>
+              <div className="flex flex-col gap-3">
+                <button onClick={handlePayment} disabled={actingOnId} className="w-full py-5 bg-secondary text-dark rounded-2xl font-bold uppercase text-xs shadow-glow-blue flex items-center justify-center gap-3 active:scale-95 transition-all">
+                  {actingOnId ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Pay & Authorize</>}
+                </button>
+                <button 
+                  onClick={() => handleReject(paymentModal.id)} 
+                  disabled={actingOnId} 
+                  className="w-full py-3 text-gray-500 font-bold uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors"
+                >
+                  Reject & Abort
+                </button>
+              </div>
             </div>
           </div>
         </div>

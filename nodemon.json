@@ -1,0 +1,11 @@
+{
+  "ignore": [
+    "src/*",
+    "public/*",
+    "dist/*",
+    "node_modules/*",
+    "*.test.js",
+    "scratch/*"
+  ],
+  "ext": "js,json,mjs,cjs"
+}

@@ -49,3 +49,4 @@ app.listen(PORT, () => {
   console.log(`📡 Dashboard: http://localhost:${PORT}`);
   console.log(`🔑 Neural Link: ${KEY ? 'ACTIVE' : '⚠️  MISSING — check env vars'}\n`);
 });
+export default app;

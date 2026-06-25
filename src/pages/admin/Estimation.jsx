@@ -18,6 +18,18 @@ import { aiService } from '../../lib/ai';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
+const SERVICE_CATALOG = [
+  { id: 'general', name: 'General Service', cost: 3500 },
+  { id: 'oil', name: 'Oil Change', cost: 1200 },
+  { id: 'brakes', name: 'Brake Repair', cost: 2800 },
+  { id: 'ac', name: 'AC Maintenance', cost: 1500 },
+  { id: 'battery', name: 'Battery Replacement', cost: 4500 },
+  { id: 'engine', name: 'Engine Diagnostic', cost: 800 },
+  { id: 'suspension', name: 'Suspension Overhaul', cost: 12000 },
+  { id: 'alignment', name: 'Wheel Alignment', cost: 600 },
+  { id: 'detail', name: 'Full Detail', cost: 3000 },
+];
+
 const AdminEstimation = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +37,7 @@ const AdminEstimation = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [estimate, setEstimate] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
 
   useEffect(() => {
     fetchPendingEstimations();
@@ -51,21 +64,32 @@ const AdminEstimation = () => {
     setIsEditing(false);
     
     try {
-      // AI generates a base cost based on vehicle and issue
-      const result = await aiService.analyzeIssue(
-        booking.vehicles.brand,
-        booking.vehicles.model,
-        booking.issue_description
-      );
+      const selectedService = SERVICE_CATALOG.find(s => s.id === selectedServiceId);
       
-      // Extract costs from the AI response (matching server/services/aiService.js names)
-      const min = result.estimatedCostMin || 0;
-      const max = result.estimatedCostMax || 0;
-      const baseCost = Math.floor((min + max) / 2) || 500;
+      // Use refined estimateCost if service type is selected, otherwise diagnosis
+      let result;
+      if (selectedService) {
+        result = await aiService.estimateCost(
+          booking.vehicles.brand,
+          booking.vehicles.model,
+          selectedService.name,
+          booking.issue_description
+        );
+      } else {
+        result = await aiService.analyzeIssue(
+          booking.vehicles.brand,
+          booking.vehicles.model,
+          booking.issue_description
+        );
+      }
+      
+      const min = result.totalMin || result.estimatedCostMin || 0;
+      const max = result.totalMax || result.estimatedCostMax || 0;
+      const baseCost = Math.floor((min + max) / 2) || selectedService?.cost || 500;
       
       setEstimate({
-        analysis: result.problemSummary || result.conditionAssessment || 'Manual inspection recommended.',
-        recommendedService: result.recommendedService || 'General Service',
+        analysis: result.aiNote || result.problemSummary || result.conditionAssessment || 'Manual inspection recommended.',
+        recommendedService: selectedService?.name || result.recommendedService || 'General Service',
         severity: result.urgencyLevel || 'medium',
         finalCost: baseCost
       });
@@ -74,6 +98,19 @@ const AdminEstimation = () => {
       toast.error('Neural link failed');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleServiceSelect = (serviceId) => {
+    setSelectedServiceId(serviceId);
+    const service = SERVICE_CATALOG.find(s => s.id === serviceId);
+    if (service) {
+      setEstimate(prev => ({
+        ...prev,
+        recommendedService: service.name,
+        finalCost: service.cost,
+        analysis: prev?.analysis || `Standard ${service.name} protocol initiated.`
+      }));
     }
   };
 
@@ -180,6 +217,27 @@ const AdminEstimation = () => {
                   <Sparkles className="text-primary" size={20} />
                 </div>
                 <h2 className="text-xl font-bold uppercase tracking-widest text-white">Neural Result</h2>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Select Service Kind</label>
+                <select 
+                  value={selectedServiceId}
+                  onChange={(e) => handleServiceSelect(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-primary/50"
+                >
+                  <option value="">Manual/Custom</option>
+                  {SERVICE_CATALOG.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} - ₹{s.cost}</option>
+                  ))}
+                </select>
+                <button 
+                  onClick={() => handleAiEstimate(selectedBooking)}
+                  disabled={isAnalyzing}
+                  className="w-full py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] font-bold uppercase tracking-[0.2em] hover:bg-primary/10 hover:text-primary transition-all flex items-center justify-center gap-2"
+                >
+                  {isAnalyzing ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />} Refine with AI
+                </button>
               </div>
 
               <div className="space-y-6">

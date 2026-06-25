@@ -11,32 +11,24 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setLoading(false);
+    setLoading(true);
     const { data, error } = await supabase.auth.signUp({ 
       email: formData.email, 
       password: formData.password,
-      options: { data: { full_name: formData.fullName, phone: formData.phone } }
+      options: { 
+        data: { 
+          name: formData.fullName, 
+          phone: formData.phone 
+        } 
+      }
     });
     
     if (error) {
       toast.error(error.message);
+      setLoading(false);
     } else if (data?.user) {
-      // Create a profile record for the new user
-      const { error: profileError } = await supabase.from('profiles').insert([{
-        id: data.user.id,
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        role: 'user' // Default role
-      }]);
-
-      if (profileError) {
-        console.error('Profile creation failed:', profileError);
-        toast.error('Account created, but profile initialization failed.');
-      } else {
-        toast.success('Registration successful! Accessing base...');
-        navigate('/login');
-      }
+      toast.success('Registration successful! Accessing base...');
+      navigate('/login');
     }
   };
 

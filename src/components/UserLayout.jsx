@@ -69,10 +69,13 @@ const UserLayout = () => {
             ))}
 
             {(profile?.role === 'admin' || localStorage.getItem('dev_admin') === 'true') && (
-              <NavLink to="/admin" className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-secondary hover:bg-secondary/10 border border-transparent hover:border-secondary/30 mt-8">
-                <Bot size={20} />
-                <span className="font-bold uppercase tracking-widest text-[10px]">Switch to Admin Panel</span>
-              </NavLink>
+              <div className="mt-8 pt-4 border-t border-white/5">
+                <p className="px-4 mb-2 text-[10px] text-gray-500 uppercase font-bold tracking-widest">Admin Control</p>
+                <NavLink to="/admin" className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-secondary hover:bg-secondary/10 border border-secondary/20 hover:border-secondary/50 bg-secondary/5">
+                  <Bot size={20} />
+                  <span className="font-bold uppercase tracking-widest text-[10px]">Switch to Admin Panel</span>
+                </NavLink>
+              </div>
             )}
           </nav>
           <div className="p-4 border-t border-white/10">
@@ -96,6 +99,15 @@ const UserLayout = () => {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-4 ml-auto">
+            {(profile?.role === 'admin' || localStorage.getItem('dev_admin') === 'true') && (
+              <NavLink 
+                to="/admin" 
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 border border-secondary/30 text-secondary hover:bg-secondary/20 transition-all group"
+              >
+                <Bot size={14} className="group-hover:rotate-12 transition-transform" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">Admin Mission Control</span>
+              </NavLink>
+            )}
             <div className="hidden md:flex flex-col items-end">
               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">System Status</p>
               <div className="flex items-center gap-2">

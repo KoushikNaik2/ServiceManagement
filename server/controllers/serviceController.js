@@ -115,7 +115,7 @@ export const analyzeServiceRequest = async (req, res) => {
         .single();
       vehicle = data;
     }
-    
+
     const result = await getMaintenanceSuggestions(vehicle, issueDescription);
     res.json(result);
   } catch (error) {
@@ -132,7 +132,7 @@ export const cancelServiceRequest = async (req, res) => {
       .single();
 
     if (fetchError || !service) return res.status(404).json({ message: 'Booking not found' });
-    
+
     if (service.user_id !== req.user.id) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -175,7 +175,7 @@ export const deleteServiceRequest = async (req, res) => {
       .single();
 
     if (fetchError || !service) return res.status(404).json({ message: 'Booking not found' });
-    
+
     if (service.user_id !== req.user.id) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { 
   BarChart3, 
   Inbox, 
@@ -19,7 +20,31 @@ import {
 const AdminLayout = () => {
   const { profile, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchPendingCount();
+    
+    const channel = supabase.channel('sidebar_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+        fetchPendingCount();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchPendingCount = async () => {
+    const { count } = await supabase
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    
+    setPendingCount(count || 0);
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -28,7 +53,7 @@ const AdminLayout = () => {
 
   const menuItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/admin' },
-    { icon: Inbox, label: 'Requests', path: '/admin/requests' },
+    { icon: Inbox, label: 'Requests', path: '/admin/requests', badge: pendingCount },
     { icon: Calculator, label: 'Estimation', path: '/admin/estimation' },
     { icon: Activity, label: 'Live Status', path: '/admin/status' },
     { icon: FileText, label: 'Records', path: '/admin/records' },
@@ -56,24 +81,34 @@ const AdminLayout = () => {
             </div>
             <span className="text-xl font-bold tracking-tighter text-white">SERVICE<span className="text-secondary">POINT</span></span>
           </NavLink>
-          <nav className="flex-1 px-4 space-y-2 mt-4">
+          <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto custom-scrollbar">
             {menuItems.map((item) => (
               <NavLink 
                 key={item.path} 
                 to={item.path} 
                 end={item.path === '/admin'} 
                 onClick={() => setIsSidebarOpen(false)}
-                className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive ? 'bg-secondary/20 text-secondary border border-secondary/30 shadow-glow-blue' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                className={({ isActive }) => `flex items-center justify-between px-4 py-3 rounded-lg transition-all ${isActive ? 'bg-secondary/20 text-secondary border border-secondary/30 shadow-glow-blue' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
               >
-                <item.icon size={20} />
-                <span className="font-medium">{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <item.icon size={20} />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                {item.badge > 0 && (
+                  <span className="px-2 py-0.5 bg-secondary text-dark text-[10px] font-bold rounded-full shadow-glow-blue">
+                    {item.badge}
+                  </span>
+                )}
               </NavLink>
             ))}
             
-            <NavLink to="/" className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-primary hover:bg-primary/10 border border-transparent hover:border-primary/30 mt-8">
-              <Bot size={20} />
-              <span className="font-bold uppercase tracking-widest text-[10px]">Switch to User View</span>
-            </NavLink>
+            <div className="mt-8 pt-4 border-t border-white/5">
+              <p className="px-4 mb-2 text-[10px] text-gray-500 uppercase font-bold tracking-widest">Navigation</p>
+              <NavLink to="/" className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-primary hover:bg-primary/10 border border-primary/20 hover:border-primary/50 bg-primary/5">
+                <Bot size={20} />
+                <span className="font-bold uppercase tracking-widest text-[10px]">Switch to User View</span>
+              </NavLink>
+            </div>
           </nav>
           <div className="p-4 border-t border-white/10">
             <div className="flex items-center gap-3 px-2 py-3">
@@ -96,6 +131,13 @@ const AdminLayout = () => {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-4 ml-auto">
+            <NavLink 
+              to="/" 
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all group"
+            >
+              <Activity size={14} className="group-hover:rotate-12 transition-transform" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Return to Operations</span>
+            </NavLink>
             <div className="hidden md:flex flex-col items-end">
               <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Command Center Status</p>
               <div className="flex items-center gap-2">
@@ -116,3 +158,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+

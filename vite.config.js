@@ -11,10 +11,17 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    strictPort: true,
+    host: '127.0.0.1',
+    hmr: {
+      protocol: 'ws',
+      host: '127.0.0.1',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5001',
         changeOrigin: true,
+        secure: false,
       },
     },
   },
