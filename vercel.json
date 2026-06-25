@@ -17,11 +17,8 @@
       "dest": "server.js"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "handle": "filesystem"
+      "src": "^/(assets|favicon\\.ico|vite\\.svg)(.*)",
+      "dest": "/$1$2"
     },
     {
       "src": "/(.*)",

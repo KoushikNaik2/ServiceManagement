@@ -1,6 +1,6 @@
 node_modules
 .env
-dist
+# dist  <-- intentionally tracked for Vercel deployment
 .DS_Store
 *.log
 supabase/.temp
