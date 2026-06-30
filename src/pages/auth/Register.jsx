@@ -12,24 +12,43 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({ 
-      email: formData.email, 
+
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
       password: formData.password,
-      options: { 
-        data: { 
-          name: formData.fullName, 
-          phone: formData.phone 
-        } 
-      }
+      options: {
+        data: {
+          full_name: formData.fullName,
+          phone: formData.phone,
+        },
+      },
     });
-    
+
     if (error) {
       toast.error(error.message);
       setLoading(false);
-    } else if (data?.user) {
-      toast.success('Registration successful! Accessing base...');
-      navigate('/login');
+      return;
     }
+
+    // Supabase returns a user with empty identities[] when email confirmation
+    // is ENABLED and the email already exists (or is pending confirmation).
+    if (data?.user && data.user.identities?.length === 0) {
+      toast.error('An account with this email already exists. Please check your email for a confirmation link or try logging in.');
+      setLoading(false);
+      return;
+    }
+
+    // If a session was returned, email confirmation is DISABLED → log in immediately
+    if (data?.session) {
+      toast.success('Account created! Welcome aboard.');
+      navigate('/');
+      return;
+    }
+
+    // Email confirmation is ENABLED → ask user to check inbox
+    toast.success('Account created! Please check your email to confirm your account, then log in.', { duration: 6000 });
+    navigate('/login');
+    setLoading(false);
   };
 
   return (

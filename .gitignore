@@ -5,3 +5,6 @@ node_modules
 *.log
 supabase/.temp
 .supabase
+# Temp admin/diagnostic scripts
+create_admin.js
+diag_admin.mjs

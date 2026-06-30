@@ -14,8 +14,17 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) toast.error(error.message);
-    else navigate('/');
+    if (error) {
+      if (error.message.toLowerCase().includes('email not confirmed')) {
+        toast.error('Please confirm your email first — check your inbox for a verification link.', { duration: 6000 });
+      } else if (error.message.toLowerCase().includes('invalid login credentials') || error.message.toLowerCase().includes('invalid credentials')) {
+        toast.error('Incorrect email or password. Please try again.');
+      } else {
+        toast.error(error.message);
+      }
+    } else {
+      navigate('/');
+    }
     setLoading(false);
   };
 
